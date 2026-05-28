@@ -4,7 +4,7 @@ from datetime import timedelta
 
 app = Flask(__name__)
 
-app.secret_key = 'Секретный ключ для работы сессии и хранения данных в куки'
+app.secret_key = "faodiqfh7m8f9asdn902u3d-0923udp23pdn8v-6avav8m95[yj,c5jioynbq[-mav05'y9cpryjnqmarba]'a6jp34cj5c,w94mvna6[uy]"
 
 app.permanent_session_lifetime = timedelta(days=365)
 
@@ -46,11 +46,14 @@ def login():
         is_active = sql.cursor.fetchone()
         if is_active:
             session['user_email'] = email # Добавил здесь, потому что по тестовому надо запоминать пользователя после логина
-            session['user_password'] = request.form.get("password")
             sql.cursor.execute("SELECT first_name FROM users WHERE email = ?", (session['user_email'],))
             session['user_first_name'] = sql.cursor.fetchone()[0]
             sql.cursor.execute("SELECT last_name FROM users WHERE email = ?", (session['user_email'],))
             session['user_last_name'] = sql.cursor.fetchone()[0]
+            sql.cursor.execute("SELECT fighter FROM users WHERE email = ?", (session['user_email'],))
+            session['fighter'] = sql.cursor.fetchone()[0]
+            sql.cursor.execute("SELECT admin FROM users WHERE email = ?", (session['user_email'],))
+            session['admin'] = sql.cursor.fetchone()[0]
             session.permanent = True
         else:
             print("Пользователь удалён")
@@ -59,10 +62,7 @@ def login():
 
 @app.route("/logout", methods=['POST'])
 def logout():
-    session['user_first_name'] = None
-    session['user_last_name'] = None
-    session['user_email'] = None
-    session['user_password'] = None
+    session.clear()
     
     return render_template("profile.html")
 
@@ -75,7 +75,12 @@ def delete_account():
 
 @app.route("/profile", methods=['POST', 'GET'])
 def profile():
-    return render_template("profile.html", user=(session['user_first_name'], session['user_last_name'], session['user_email']) if session.get('user_first_name') else None)
+    return render_template("profile.html",
+                            user=(session['user_first_name'],
+                                  session['user_last_name'],
+                                  session['user_email'],
+                                  session['admin'])
+                                if session.get('user_first_name') else None)
 
 def update_user_value(column):
     new_value = request.form.get(column)
@@ -84,7 +89,8 @@ def update_user_value(column):
             f"UPDATE users SET {column} = ? WHERE email = ?",
             (new_value, session.get("user_email"))
         )
-        session[f"user_{column}"] = new_value
+        if column != "password":
+            session[f"user_{column}"] = new_value
         sql.conn.commit()
 
 @app.route("/update_profile", methods=['POST'])
@@ -101,6 +107,38 @@ def update_profile():
     update_user_value("password")
 
     return render_template("profile.html", user=(session['user_first_name'], session['user_last_name'], session['user_email']) if session.get('user_first_name') else None)
+
+@app.route("/rules", methods=['GET'])
+def rules():
+    if not session.get("user_email"):
+        return render_template("error.html", code=(401, "Необходима авторизация")), 401
+    
+    print(session.get("fighter"))
+
+    if not session.get("fighter") or session.get("fighter") == 0:
+        return render_template("error.html", code=(403, "Доступ запрещён")), 403
+    
+    return render_template("rules.html")
+
+@app.route("/admin_panel", methods=['POST', 'GET'])
+def admin_panel():
+    sql.cursor.execute("SELECT * FROM users") # Для больших данных надо делать через странички или как угодно, но не всё сразу
+    return render_template("admin_panel.html", users=sql.cursor.fetchall())
+
+@app.route("/change_fighter_status", methods=['POST'])
+def change_fighter_status():
+    if session['admin']:
+        fighter = int(request.form.get('fighter'))
+        id = request.form.get('user_id')
+        
+        print(fighter, id)
+        sql.cursor.execute("UPDATE users SET fighter = ? WHERE id = ?", (fighter, id))
+        sql.conn.commit()
+
+        sql.cursor.execute("SELECT * FROM users")
+        return render_template("admin_panel.html", users=sql.cursor.fetchall())
+    else:
+        return render_template("error.html", code=(403, "Доступ запрещён")), 403
 
 if __name__ == "__main__":
     app.run(host='127.0.0.1', port=5000, debug=False)

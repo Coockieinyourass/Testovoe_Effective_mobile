@@ -17,6 +17,7 @@ def create_table():
         password TEXT,
         admin BOOLEAN,
         is_active BOOLEAN,
+        fighter BOOLEAN,
         id INTEGER PRIMARY KEY AUTOINCREMENT
         )
     ''')
@@ -50,14 +51,15 @@ def registration(first_name, last_name, email, password, password_2):
 
     try:
         cursor.execute('''
-                       INSERT INTO users (first_name, last_name, email, password, admin, is_active)
-                       VALUES (?, ?, ?, ?, ?, ?)
+                       INSERT INTO users (first_name, last_name, email, password, admin, is_active, fighter)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)
                         ''', (first_name,
                                last_name,
                                email,
                                password,
                                0,
-                               1)
+                               1,
+                               0)
         )
         conn.commit()
     except sqlite3.IntegrityError as e:

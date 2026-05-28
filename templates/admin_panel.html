@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+</head>
+
+<body>
+
+    <h1>Администрирование сайта</h1>
+
+    <table border="1" cellpadding="10">
+
+        <tr>
+            <th>ID</th>
+            <th>Имя</th>
+            <th>Фамилия</th>
+            <th>Почта</th>
+            <th>Статус бойца</th>
+            <th>Активен</th>
+            <th>Изменить статус</th>
+        </tr>
+
+        {% for user in users %}
+
+        <tr>
+
+            <td>{{ user[6] }}</td>
+
+            <td>{{ user[0] }}</td>
+
+            <td>{{ user[1] }}</td>
+
+            <td>{{ user[2] }}</td>
+
+            <td>
+                {% if user[7] %}
+                    Боец
+                {% else %}
+                    Не боец
+                {% endif %}
+            </td>
+
+            <td>
+                {% if user[5] %}
+                    Да
+                {% else %}
+                    Нет
+                {% endif %}
+            </td>
+
+            <td>
+
+                <form action="/change_fighter_status" method="POST">
+
+                    <input
+                        type="hidden"
+                        name="user_id"
+                        value="{{ user[6] }}"
+                    >
+
+                    {% if user[7] %}
+
+                        <input
+                            type="hidden"
+                            name="fighter"
+                            value="0"
+                        >
+
+                        <button type="submit">
+                            Убрать бойца {{user[4]}}
+                        </button>
+
+                    {% else %}
+
+                        <input
+                            type="hidden"
+                            name="fighter"
+                            value="1"
+                        >
+
+                        <button type="submit">
+                            Сделать бойцом {{user[4]}}
+                        </button>
+
+                    {% endif %}
+
+                </form>
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+</body>
+</html>

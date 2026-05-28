@@ -92,6 +92,30 @@
 
     </form>
 
+    <br><br><br>
+
+    <form action="/rules" method="GET">
+
+        <button type="submit">
+            rules
+        </button>
+
+    </form>
+
+{% if user[3] %}
+
+    <br>
+
+    <form action="/admin_panel" method="GET">
+
+        <button type="submit">
+            Admin panel
+        </button>
+
+    </form>
+
+{% endif %}
+
 {% else %}
 
     <h1>Profile not found</h1>
